@@ -167,8 +167,10 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
 
     if "DATE-OBS" not in spec.header.keys():
         spec.header["DATE-OBS"] = "2017-05-31T02:53:52.356"
+        print(f"Info [extractAtmo] : DATE-OBS not given")
     if "DATE" not in spec.header.keys():
         spec.header["DATE"] = "2017-05-31T02:55:54"
+        print(f"Info [extractAtmo] : DATE not given")
 
     if "debug" in sys.argv:
         parameters.DEBUG = True
