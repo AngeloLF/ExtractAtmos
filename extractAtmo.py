@@ -140,8 +140,6 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
     parameters.DISPLAY = False
     debug = False
 
-    file_name = f"{path}/{Args.test}/spectrum_fits/images_{num_str}_spectrum.fits"
-
     if Args.model == "true":
         predFolder = "spectrum"
         saveFolder = "true"
@@ -169,30 +167,34 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
 
     ### EXTRACTION with the spectrum
     c.fg(f"INFO [extractAtmo.py] : Begin Spectrum Minimisation for {Args.test}/{predFolder}/spectrum_{num_str}.npy ...")
-    spec = Spectrum(file_name, fast_load=True)
+    if f"images_{num_str}_spectrum.fits" in os.listdir(f"{path}/{Args.test}/spectrum_fits"):
+        file_name = f"{path}/{Args.test}/spectrum_fits/images_{num_str}_spectrum.fits"
+        spec = Spectrum(file_name, fast_load=True)
 
-    if "debug" in sys.argv:
-        parameters.DEBUG = True
-        parameters.VERBOSE = True
-        parameters.DISPLAY = True # oskour ...
-        debug = True
+        if "debug" in sys.argv:
+            parameters.DEBUG = True
+            parameters.VERBOSE = True
+            parameters.DISPLAY = True # oskour ...
+            debug = True
 
-    if predFolder is not None and predFolder != "Spectractor": # need to change data / lambdas_binw / err / cov_matrix
+        if predFolder is not None and predFolder != "Spectractor": # need to change data / lambdas_binw / err / cov_matrix
 
-        spec.convert_from_flam_to_ADUrate()
-        x = np.arange(300, 1100).astype(float)
-        y = np.load(f"{path}/{Args.test}/{predFolder}/spectrum_{num_str}.npy")
-        finterp = interpolate.interp1d(x, y, kind='linear', bounds_error=False, fill_value=0.0)
-        spec.data = finterp(spec.lambdas) / spec.gain / spec.expo
-        spec.convert_from_ADUrate_to_flam()
+            spec.convert_from_flam_to_ADUrate()
+            x = np.arange(300, 1100).astype(float)
+            y = np.load(f"{path}/{Args.test}/{predFolder}/spectrum_{num_str}.npy")
+            finterp = interpolate.interp1d(x, y, kind='linear', bounds_error=False, fill_value=0.0)
+            spec.data = finterp(spec.lambdas) / spec.gain / spec.expo
+            spec.convert_from_ADUrate_to_flam()
 
-    w = SpectrumFitWorkspace(spec, atmgrid_file_name="", verbose=debug, plot=debug, live_fit=False, fit_angstrom_exponent=True)
-    w.filename = ""
-    if "date_obs" not in dir(w.spectrum):
-        w.spectrum.date_obs = "2017-05-31T02:53:52.356"
-        print(f"Info [extractAtmos.py] : DATE-OBS not given")
-    run_spectrum_minimisation(w, method="newton")
-    recupAtmosFromParams(w, file_json)
+        w = SpectrumFitWorkspace(spec, atmgrid_file_name="", verbose=debug, plot=debug, live_fit=False, fit_angstrom_exponent=True)
+        w.filename = ""
+        if "date_obs" not in dir(w.spectrum):
+            w.spectrum.date_obs = "2017-05-31T02:53:52.356"
+            print(f"Info [extractAtmos.py] : DATE-OBS not given")
+        run_spectrum_minimisation(w, method="newton")
+        recupAtmosFromParams(w, file_json)
+    else:
+        print(f"Info [extractAtmos.py] : fits {path}/{Args.test}/spectrum_fits/images_{num_str}_spectrum.fits not exist [skip this one]")
 
 
 
@@ -240,13 +242,22 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
 
         for i, n in enumerate(nums_str):
 
-            with open(f"{path}/{Args.test}/{atmoParamFolder}/{savef}/atmos_params_{n}_spectrum.json", "r") as f:
+            if f"atmos_params_{n}_spectrum.json" in os.listdir(f"{path}/{Args.test}/{atmoParamFolder}/{savef}"):
 
-                data = json.load(f)
+                with open(f"{path}/{Args.test}/{atmoParamFolder}/{savef}/atmos_params_{n}_spectrum.json", "r") as f:
 
-            for t in targets:
-                rdata[t][0][i] = data[t][0]
-                rdata[t][1][i] = data[t][1]
+                    data = json.load(f)
+
+                for t in targets:
+                    rdata[t][0][i] = data[t][0]
+                    rdata[t][1][i] = data[t][1]
+
+            else:
+
+                print(f"Info [extractAtmos.py] in analyse, skip atmos_params_{n}_spectrum.json")
+                for t in targets:
+                    rdata[t][0][i] = np.nan
+                    rdata[t][1][i] = np.nan
 
         full_data[savef] = deepcopy(rdata)
 
@@ -285,7 +296,7 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                 else:
                     color = None
                 
-                score = np.mean(np.abs(full_data[savef][t][0][true_sort]-y))
+                score = np.nanmean(np.abs(full_data[savef][t][0][true_sort]-y))
 
                 if mode != "full":
                     if mode == "subplot" : plt.subplot(2, 2, i+1)
