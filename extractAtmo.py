@@ -165,6 +165,11 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
     c.fg(f"INFO [extractAtmo.py] : Begin Spectrum Minimisation for {Args.test}/{predFolder}/spectrum_{num_str}.npy ...")
     spec = Spectrum(file_name, fast_load=True)
 
+    if "DATE-OBS" not in spec.header.keys():
+        spec.header["DATE-OBS"] = "2017-05-31T02:53:52.356"
+    if "DATE" not in spec.header.keys():
+        spec.header["DATE"] = "2017-05-31T02:55:54"
+
     if "debug" in sys.argv:
         parameters.DEBUG = True
         parameters.VERBOSE = True
