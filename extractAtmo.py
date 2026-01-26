@@ -156,21 +156,20 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
 
     file_json = f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}/atmos_params_{num_str}_spectrum.json"
     if atmoParamFolder not in os.listdir(f"{path}/{Args.test}"):
-        os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}")
+        try:
+            os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}")
+        except:
+            print(f"WARNING [extractAtmos.py] : mkdir of {path}/{Args.test}/{atmoParamFolder} not work")
     if saveFolder not in os.listdir(f"{path}/{Args.test}/{atmoParamFolder}"):
-        os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}")
+        try:
+            os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}")
+        except:
+            print(f"WARNING [extractAtmos.py] : mkdir of {path}/{Args.test}/{atmoParamFolder}/{saveFolder} not work")
 
 
     ### EXTRACTION with the spectrum
     c.fg(f"INFO [extractAtmo.py] : Begin Spectrum Minimisation for {Args.test}/{predFolder}/spectrum_{num_str}.npy ...")
     spec = Spectrum(file_name, fast_load=True)
-
-    if "DATE-OBS" not in spec.header.keys():
-        spec.header["DATE-OBS"] = "2017-05-31T02:53:52.356"
-        print(f"Info [extractAtmo] : DATE-OBS not given")
-    if "DATE" not in spec.header.keys():
-        spec.header["DATE"] = "2017-05-31T02:55:54"
-        print(f"Info [extractAtmo] : DATE not given")
 
     if "debug" in sys.argv:
         parameters.DEBUG = True
@@ -189,6 +188,9 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
 
     w = SpectrumFitWorkspace(spec, atmgrid_file_name="", verbose=debug, plot=debug, live_fit=False, fit_angstrom_exponent=True)
     w.filename = ""
+    if "date_obs" not in dir(w.spectrum):
+        w.spectrum.date_obs = "2017-05-31T02:53:52.356"
+        print(f"Info [extractAtmos.py] : DATE-OBS not given")
     run_spectrum_minimisation(w, method="newton")
     recupAtmosFromParams(w, file_json)
 
