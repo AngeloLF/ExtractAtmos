@@ -155,6 +155,8 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
         saveFolder = f"pred_{Args.fullname}"
 
     file_json = f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}/atmos_params_{num_str}_spectrum.json"
+    if atmoParamFolder not in os.listdir(f"{path}/{Args.test}"):
+        os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}")
     if saveFolder not in os.listdir(f"{path}/{Args.test}/{atmoParamFolder}"):
         os.mkdir(f"{path}/{Args.test}/{atmoParamFolder}/{saveFolder}")
 
