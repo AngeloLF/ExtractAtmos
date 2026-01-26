@@ -329,14 +329,14 @@ if __name__ == "__main__":
         for arg in sys.argv[1:]:
             if arg[:6] == "range=" : nrange = arg[6:]
 
+        nums_str = np.sort([fspectrum.split("_")[1][:-4] for fspectrum in os.listdir(f"{path}/{Args.test}/spectrum")])
+
         # build partition
         if nrange is None:
             partition = [None]*len(nums_str)
         else:
             nbegin, nsimu = nrange.split("_")
             partition = np.arange(int(nbegin), int(nbegin) + int(nsimu))
-
-        nums_str = np.sort([fspectrum.split("_")[1][:-4] for fspectrum in os.listdir(f"{path}/{Args.test}/spectrum")])
 
         t0 = time()
         
