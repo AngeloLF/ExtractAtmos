@@ -46,7 +46,7 @@ def recupAtmosFromParams(w, file_json, wanted_labels=["vaod", "ozone", "pwv", "d
 
 
 
-
+"""
 def extractOneOld(testFolder, num_str, predFolder=None, path="./results/output_simu", atmoParamFolder="atmos_params_fit", method="interp"):
 
     parameters.DISPLAY = False
@@ -133,6 +133,7 @@ def extractOneOld(testFolder, num_str, predFolder=None, path="./results/output_s
         w.filename = ""
         run_spectrogram_minimisation(w, method="newton")
         recupAtmosFromParams(w, file_json_spectrogram)
+"""
 
 def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atmos_params_fit"):
 
@@ -323,16 +324,30 @@ if __name__ == "__main__":
     if "extract_atmo" in sys.argv: 
         Args = get_argv(sys.argv[1:], prog="extract_atmo")
 
+        # multiple cpu ?
+        nrange = None
+        for arg in sys.argv[1:]:
+            if arg[:6] == "range=" : nrange = arg[6:]
+
+        # build partition
+        if nrange is None:
+            partition = [None]*len(nums_str)
+        else:
+            nbegin, nsimu = nrange.split("_")
+            partition = np.arange(int(nbegin), int(nbegin) + int(nsimu))
+
         nums_str = np.sort([fspectrum.split("_")[1][:-4] for fspectrum in os.listdir(f"{path}/{Args.test}/spectrum")])
 
         t0 = time()
         
         for n in nums_str:
 
-            extractOne(Args, n, path=path, atmoParamFolder=atmoParamFolder)
+            if partition[0] is None or int(n) in partition:
+
+                extractOne(Args, n, path=path, atmoParamFolder=atmoParamFolder)
 
         tf = time() - t0
-        print(f"Finish in {tf/60:.1f} min [{tf/len(nums_str):.1f} sec/extraction]")
+        print(f"Finish in {tf/60:.1f} min [{tf/len(partition):.1f} sec/extraction]")
 
     elif "analyse_atmo" in sys.argv:
 
