@@ -328,7 +328,7 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                     plt.ylabel("Residus")
                     plt.axhline(0, color="k", ls=":", label="True value")
                     plt.title(f"{savef} : residus abs = {score:.3f}$\pm${std:.3f} [mean={score_mean:.3f}$\pm${score_std:.3f}]")
-                    plt.ylim(np.min(res), np.max(res))
+                    plt.ylim(np.nanmin(res), np.nanmax(res))
                     if mode == "plot" : plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/{t}/{t}_{savef}.png")
                 else:
                     plt.plot(x, res, color=color, ls="", marker=".")
