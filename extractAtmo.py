@@ -276,8 +276,13 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
         hp = json.load(fjson)
     vp = np.load(f"{path}/{Args.test}/vparams.npz")
 
+    save_txt = "Save extract atmo performances :\n"
+    print("\nSave extract atmo performances :")
 
     for i, t in enumerate(targets):
+
+        save_txt += f"\n{t}\n"
+        print(f"\n{t}")
 
         true_vals = getTrueValues(hp, vp, t)
         if t in ["ozone", "vaod", "pwv"]:
@@ -305,6 +310,13 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                     color = None
                 
                 score = np.nanmean(np.abs(full_data[savef][t][0][true_sort]-y))
+                std = np.nanstd(np.abs(full_data[savef][t][0][true_sort]-y))
+                score_mean = np.nanmean(full_data[savef][t][0][true_sort]-y)
+                score_std = np.nanstd(full_data[savef][t][0][true_sort]-y)
+
+                if mode == "plot":
+                    save_txt += f"{savef} : {score:.3f} +- {std:.3f} --- {score_mean:.3f} +- {score_std:.3f}\n"
+                    print(f"{savef} : {score:.3f} +- {std:.3f} --- {score_mean:.3f} +- {score_std:.3f}")
 
                 if mode != "full":
                     if mode == "subplot" : plt.subplot(2, 2, i+1)
@@ -313,7 +325,7 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                     plt.xlabel(t)
                     plt.ylabel("Residus")
                     plt.axhline(0, color="k", ls=":", label="True value")
-                    plt.title(f"{savef} : {score:.3f}")
+                    plt.title(f"{savef} : ABS={score:.3f} [mean={score_mean:.3f}]")
                     if mode == "plot" : plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/{t}/{t}_{savef}.png")
                 else:
                     plt.plot(x, full_data[savef][t][0][true_sort]-y, color=color, ls="", marker=".")
@@ -332,6 +344,9 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                 plt.tight_layout()
                 plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/subplot_{t}.png")
                 plt.close()
+
+    with open(f"{path}/{Args.test}/{atmoParamFolderSave}/save_extraction_score.txt", "w") as f:
+        f.write(save_txt)
 
 
 
