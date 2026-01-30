@@ -140,6 +140,10 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
     parameters.DISPLAY = False
     debug = False
 
+    ### Importation hparams & variable params
+    with open(f"{path}/{Args.test}/hparams.json", "r") as fjson:
+        hp = json.load(fjson)
+
     if Args.model == "true":
         predFolder = "spectrum"
         saveFolder = "true"
@@ -178,6 +182,10 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
             debug = True
 
         if predFolder is not None and predFolder != "Spectractor": # need to change data / lambdas_binw / err / cov_matrix
+
+            if not "Spectractor" in predFolder:
+                spec.header["D2CCD"] = hp["DISTANCE2CCD"]
+                print(f"Change d2ccd")
 
             spec.convert_from_flam_to_ADUrate()
             x = np.arange(300, 1100).astype(float)
@@ -318,10 +326,12 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
             
                 plt.tight_layout()
                 plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/full_{t}.png")
+                plt.close()
 
             elif mode == "subplot":
                 plt.tight_layout()
                 plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/subplot_{t}.png")
+                plt.close()
 
 
 
