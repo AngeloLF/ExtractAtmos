@@ -308,11 +308,13 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                     color = colors[i]
                 else:
                     color = None
+
+                res = full_data[savef][t][0][true_sort]-y
                 
-                score = np.nanmean(np.abs(full_data[savef][t][0][true_sort]-y))
-                std = np.nanstd(np.abs(full_data[savef][t][0][true_sort]-y))
-                score_mean = np.nanmean(full_data[savef][t][0][true_sort]-y)
-                score_std = np.nanstd(full_data[savef][t][0][true_sort]-y)
+                score = np.nanmean(np.abs(res))
+                std = np.nanstd(np.abs(res))
+                score_mean = np.nanmean(res)
+                score_std = np.nanstd(res)
 
                 if mode == "plot":
                     save_txt += f"{savef} : {score:.3f} +- {std:.3f} --- {score_mean:.3f} +- {score_std:.3f}\n"
@@ -320,15 +322,16 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
 
                 if mode != "full":
                     if mode == "subplot" : plt.subplot(2, 2, i+1)
-                    plt.errorbar(x, full_data[savef][t][0][true_sort]-y, yerr=full_data[savef][t][1][true_sort], color=color, ls="", marker=".", label=f"{savef} : {score:.3f}")
+                    plt.errorbar(x, res, yerr=full_data[savef][t][1][true_sort], color=color, ls="", marker=".", label=f"{savef} : {score:.3f}")
                     plt.plot()
                     plt.xlabel(t)
                     plt.ylabel("Residus")
                     plt.axhline(0, color="k", ls=":", label="True value")
-                    plt.title(f"{savef} : ABS={score:.3f} [mean={score_mean:.3f}]")
+                    plt.title(f"{savef} : residus abs = {score:.3f}$\pm${std:.3f} [mean={score_mean:.3f}$\pm${score_std:.3f}]")
+                    plt.ylim(np.min(res), np.max(res))
                     if mode == "plot" : plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/{t}/{t}_{savef}.png")
                 else:
-                    plt.plot(x, full_data[savef][t][0][true_sort]-y, color=color, ls="", marker=".")
+                    plt.plot(x, res, color=color, ls="", marker=".")
 
             if mode == "full":
                 plt.xlabel(t)
