@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys, json, os, shutil
 import coloralf as c
+# import alftool as alf
 from scipy import interpolate
 from time import time
 from copy import deepcopy
@@ -25,6 +26,17 @@ from spectractor.fit.fit_spectrum import SpectrumFitWorkspace, run_spectrum_mini
 
 
 
+def showHeader(header):
+
+    keys = list(header.keys())
+    print(f"\nHEADER : ")
+
+    for k in keys:
+        print(f"{c.lr}{k}{c.d} : {header[k]}")
+
+
+
+
 
 
 def recupAtmosFromParams(w, file_json, wanted_labels=["vaod", "ozone", "pwv", "d_ccd"]):
@@ -44,96 +56,6 @@ def recupAtmosFromParams(w, file_json, wanted_labels=["vaod", "ozone", "pwv", "d
 
 
 
-
-
-"""
-def extractOneOld(testFolder, num_str, predFolder=None, path="./results/output_simu", atmoParamFolder="atmos_params_fit", method="interp"):
-
-    parameters.DISPLAY = False
-
-    file_name = f"{path}/{testFolder}/spectrum_fits/images_{num_str}_spectrum.fits"
-
-    if predFolder is None:
-        file_json = f"{path}/{testFolder}/{atmoParamFolder}/x/Spectractor/atmos_params_{num_str}_spectrum.json"
-        file_json_spectrogram = f"{path}/{testFolder}/{atmoParamFolder}/Spectractor/atmos_params_{num_str}_spectrogram.json"
-        predFolder = "Spectractor"
-        method = "x"
-    else:
-        file_json = f"{path}/{testFolder}/{atmoParamFolder}/{method}/{predFolder}/atmos_params_{num_str}_spectrum.json"
-
-    if method not in os.listdir(f"{path}/{testFolder}/{atmoParamFolder}"):
-        os.mkdir(f"{path}/{testFolder}/{atmoParamFolder}/{method}")
-    if predFolder not in os.listdir(f"{path}/{testFolder}/{atmoParamFolder}/{method}"):
-        os.mkdir(f"{path}/{testFolder}/{atmoParamFolder}/{method}/{predFolder}")
-
-
-
-    ### EXTRACTION with the spectrum
-    c.fg(f"INFO [extractAtmo.py] : Begin Spectrum Minimisation ...")
-    spec = Spectrum(file_name, fast_load=True)
-
-    if "debug" in sys.argv:
-        parameters.DEBUG = True
-        parameters.VERBOSE = True
-        parameters.DISPLAY = True # oskour ...
-
-    if predFolder is not None and predFolder != "Spectractor": # need to change data / lambdas_binw / err / cov_matrix
-
-        if method == "interp":
-
-            spec.convert_from_flam_to_ADUrate()
-
-            x = np.arange(300, 1100).astype(float)
-            y = np.load(f"{path}/{testFolder}/{predFolder}/spectrum_{num_str}.npy")
-            err = np.load(f"{path}/{testFolder}/pred_Spectractor_x_x_0e+00/spectrumerr_{num_str}.npy")
-            finterp = interpolate.interp1d(x, y, kind='linear', bounds_error=False, fill_value=0.0)
-            finterp_err = interpolate.interp1d(x, err, kind='linear', bounds_error=False, fill_value=0.0)
-
-            spec.data = finterp(spec.lambdas) / spec.gain / spec.expo
-            spec.err = finterp_err(spec.lambdas) / spec.gain / spec.expo
-            spec.err[spec.err < 1] = 1
-            spec.cov_matrix = np.eye(np.size(spec.err)) * spec.err**2
-
-            spec.convert_from_ADUrate_to_flam()
-
-        elif method == "replace":
-
-            spec.convert_from_flam_to_ADUrate()
-
-            x = np.arange(300, 1100).astype(float)
-            y = np.load(f"{path}/{testFolder}/{predFolder}/spectrum_{num_str}.npy")
-            err = np.load(f"{path}/{testFolder}/pred_Spectractor_x_x_0e+00/spectrumerr_{num_str}.npy")
-
-            spec.lambdas = x
-            spec.data = y
-            spec.err = err
-            spec.err[spec.err < 1] = 1
-            spec.lambdas_binwidths = np.ones_like(x)
-            spec.spectrogram_Nx = np.size(x)
-            spec.cov_matrix = np.eye(np.size(spec.err)) * spec.err**2
-
-            spec.convert_from_ADUrate_to_flam()
-
-        else:
-
-            raise Exception(f"method {method} unknow")
-
-    w = SpectrumFitWorkspace(spec, atmgrid_file_name="", verbose=True, plot=True, live_fit=False, fit_angstrom_exponent=False)
-    w.filename = ""
-    run_spectrum_minimisation(w, method="newton")
-    recupAtmosFromParams(w, file_json)
-
-
-
-    ### EXTRACTION with spectrogram (only for spectractor)
-    if False : #predFolder == "Spectractor":
-        c.fg(f"INFO [extractAtmo.py] : Begin Spectrogram Minimisation ...")
-
-        w = SpectrogramFitWorkspace(spec, atmgrid_file_name="", verbose=False, plot=False, live_fit=False, fit_angstrom_exponent=True)
-        w.filename = ""
-        run_spectrogram_minimisation(w, method="newton")
-        recupAtmosFromParams(w, file_json_spectrogram)
-"""
 
 def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atmos_params_fit"):
 
@@ -174,6 +96,9 @@ def extractOne(Args, num_str, path="./results/output_simu", atmoParamFolder="atm
     if f"images_{num_str}_spectrum.fits" in os.listdir(f"{path}/{Args.test}/spectrum_fits"):
         file_name = f"{path}/{Args.test}/spectrum_fits/images_{num_str}_spectrum.fits"
         spec = Spectrum(file_name, fast_load=True)
+
+        # showHeader(spec.header)
+        print(f"Size of lambdas : {np.size(spec.data)}")
 
         if "debug" in sys.argv:
             parameters.DEBUG = True
@@ -221,7 +146,7 @@ def getTrueValues(hp, vp, label):
 
 
 
-def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos_params_fit", atmoParamFolderSave="atmos_params_figure",colors=["r", "g", "b", "y", "m"]):
+def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos_params_fit", atmoParamFolderSave="atmos_params_figure", colors=["r", "g", "b", "y", "m"]):
 
     targets = ["vaod", "ozone", "pwv", "d_ccd"]
     nums_str = np.sort([fspectrum.split("_")[1][:-4] for fspectrum in os.listdir(f"{path}/{Args.test}/spectrum")])
@@ -279,6 +204,8 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
     save_txt = "Save extract atmo performances :\n"
     print("\nSave extract atmo performances :")
 
+    scores = {savef:dict() for savef in saveFolders}
+
     for i, t in enumerate(targets):
 
         save_txt += f"\n{t}\n"
@@ -319,6 +246,7 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                 if mode == "plot":
                     save_txt += f"{savef} : {score:.3f} +- {std:.3f} --- {score_mean:.3f} +- {score_std:.3f}\n"
                     print(f"{savef} : {score:.3f} +- {std:.3f} --- {score_mean:.3f} +- {score_std:.3f}")
+                    scores[savef][t] = [score, std]
 
                 if mode != "full":
                     if mode == "subplot" : plt.subplot(2, 2, i+1)
@@ -329,7 +257,9 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
                     plt.axhline(0, color="k", ls=":", label="True value")
                     plt.title(f"{savef} : residus abs = {score:.3f}$\pm${std:.3f} [mean={score_mean:.3f}$\pm${score_std:.3f}]")
                     plt.ylim(np.nanmin(res), np.nanmax(res))
-                    if mode == "plot" : plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/{t}/{t}_{savef}.png")
+                    if mode == "plot": 
+                        plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/{t}/{t}_{savef}.png")
+                        plt.close()
                 else:
                     plt.plot(x, res, color=color, ls="", marker=".")
 
@@ -350,6 +280,44 @@ def analyseExtraction(Args, path="./results/output_simu", atmoParamFolder="atmos
 
     with open(f"{path}/{Args.test}/{atmoParamFolderSave}/save_extraction_score.txt", "w") as f:
         f.write(save_txt)
+
+    borne_PWV = hp["vparams"]["ATM_PWV"]
+    borne_VAOD = hp["vparams"]["ATM_AEROSOLS"]
+    borne_OZONE = hp["vparams"]["ATM_OZONE"]
+
+    for savef, vals in scores.items():
+
+        o, v, p = vals["ozone"], vals["vaod"], vals["pwv"]
+        scores[savef]["total"] = [
+            (o[0] / (borne_OZONE[1] - borne_OZONE[0]) + v[0] / (borne_VAOD[1] - borne_VAOD[0]) + p[0] / (borne_PWV[1] - borne_PWV[0])) * 100., # en %
+            np.sqrt((o[1] / (borne_OZONE[1] - borne_OZONE[0]))**2 + (v[1] / (borne_VAOD[1] - borne_VAOD[0]))**2 + (p[1] / (borne_PWV[1] - borne_PWV[0]))**2) * 100., # en %
+        ]
+
+
+    for inPC in [False, True]:
+
+        plt.figure(figsize=(16, 9))
+
+        for i, (t, borne) in enumerate(zip(["pwv", "vaod", "ozone", "total"], [borne_PWV, borne_VAOD, borne_OZONE, None])):
+
+            x = np.arange(len(saveFolders))
+            divide = (borne[1] - borne[0])/100. if inPC and borne is not None else 1.0
+            y = [scores[savef][t][0] / divide for savef in saveFolders]
+            yerr = [scores[savef][t][1] / divide for savef in saveFolders]
+
+            plt.subplot(2, 2, i+1)
+            plt.errorbar(x, y, yerr=yerr, color=colors[i], ls="", marker=".")
+            plt.xticks(x, saveFolders)
+            if inPC or t == "total":
+                plt.ylabel(f"{t} (%)")
+            else:
+                plt.ylabel(f"{t}")
+
+        plt.tight_layout()
+        if inPC:
+            plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/resume_all_INPC.png")
+        else:
+            plt.savefig(f"{path}/{Args.test}/{atmoParamFolderSave}/resume_all.png")
 
 
 
